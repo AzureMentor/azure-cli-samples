@@ -1,56 +1,27 @@
 #!/bin/bash
+location="East US"
+randomIdentifier=random123
 
-# set execution context (if necessary)
-az account set --subscription <replace with your subscription name or id>
+resource="resource-$randomIdentifier"
+server="server-$randomIdentifier"
+database="database-$randomIdentifier"
 
-# Set the resource group name and location for your server
-resourceGroupName=myResourceGroup-$RANDOM
-location=westus2
+login="sampleLogin"
+password="samplePassword123!"
 
-# Set an admin login and password for your database
-adminlogin=ServerAdmin
-password=`openssl rand -base64 16`
-# password=<EnterYourComplexPasswordHere1>
+echo "Using resource group $resource with login: $login, password: $password..."
 
-# The logical server name has to be unique in the system
-servername=server-$RANDOM
+echo "Creating $resource..."
+az group create --name $resource --location "$location"
 
-# Create a resource group
-az group create \
-	--name $resourceGroupName \
-	--location $location
+echo "Creating $server on $resource..."
+az sql server create --name $server --resource-group $resource --location "$location" --admin-user $login --admin-password $password
 
-# Create a server
-az sql server create \
-	--name $servername \
-	--resource-group $resourceGroupName \
-	--location $location \
-	--admin-user $adminlogin \
-	--admin-password $password
+echo "Creating $database on $server..."
+az sql db create --resource-group $resource --server $server --name $database --edition GeneralPurpose --family Gen4 --capacity 1 
 
-# Create a General Purpose Gen4 database with 1 vCore
-az sql db create \
-	--resource-group $resourceGroupName \
-	--server $servername \
-	--name mySampleDatabase \
-	--edition GeneralPurpose \
-	--family Gen4 \
-	--capacity 1 
+echo "Monitoring size of $database..."
+az sql db list-usages --name $database --resource-group $resource --server $server
 
-# Monitor database size
-az sql db list-usages \
-	--name mySampleDatabase \
-	--resource-group $resourceGroupName \
-	--server $servername
-
-# Scale up database to 2 vCores (create command executes update if DB already exists)
-az sql db create \
-	--resource-group $resourceGroupName \
-	--server $servername \
-	--name mySampleDatabase \
-	--edition GeneralPurpose \
-	--family Gen4 \
-	--capacity 2
-
-# Echo random password
-echo $password
+echo "Scaling up $database..." # create command executes update if database already exists
+az sql db create --resource-group $resource --server $server --name $database --edition GeneralPurpose --family Gen4 --capacity 2

@@ -2,33 +2,28 @@
 
 # Function app and storage account names must be unique.
 storageName=mystorageaccount$RANDOM
-functionAppName=myappsvcpfunc$RANDOM
+functionAppName=myserverlessfunc$RANDOM
 region=westeurope
+pythonVersion=3.6 #3.7 also supported
 
-# Create a resource resourceGroupName
-az group create \
-  --name myResourceGroup \
-  --location $region
+# Create a resource group.
+az group create --name myResourceGroup --location $region
 
-# Create an azure storage account
+# Create an Azure storage account in the resource group.
 az storage account create \
   --name $storageName \
   --location $region \
   --resource-group myResourceGroup \
   --sku Standard_LRS
 
-# Create an App Service plan
-az functionapp plan create \
-  --name myappserviceplan \
-  --resource-group myResourceGroup \
-  --location $region \
-  --sku B1
-
-# Create a Function App
+# Create a serverless function app in the resource group.
 az functionapp create \
   --name $functionAppName \
   --storage-account $storageName \
-  --plan myappserviceplan \
+  --consumption-plan-location $region \
   --resource-group myResourceGroup \
+  --os-type Linux \
+  --runtime python \
+  --runtime-version $pythonVersion \
   --functions-version 2
   
